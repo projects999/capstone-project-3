@@ -8,9 +8,11 @@ data "aws_ami" "amazon_linux" {
     name   = "name"
     values = ["al2023-ami-*"]
   }
+  filter {
+    name   = "architecture"
+    values = ["arm64"]
+  }
 }
-
-# VPC
 
 resource "aws_vpc" "main" {
 
@@ -20,8 +22,6 @@ resource "aws_vpc" "main" {
     Name = "project3-vpc"
   }
 }
-
-# Subnet
 
 resource "aws_subnet" "public" {
 
@@ -33,8 +33,6 @@ resource "aws_subnet" "public" {
     Name = "project3-subnet"
   }
 }
-
-# Security Group
 
 resource "aws_security_group" "ec2_sg" {
 
@@ -51,13 +49,11 @@ resource "aws_security_group" "ec2_sg" {
   }
 }
 
-# EC2
-
 resource "aws_instance" "server" {
 
   ami = data.aws_ami.amazon_linux.id
 
-  instance_type = "t2.micro"
+  instance_type = "t4g.small"
 
   subnet_id = aws_subnet.public.id
 
@@ -72,14 +68,10 @@ resource "aws_instance" "server" {
   }
 }
 
-# CloudWatch Log Group
-
 resource "aws_cloudwatch_log_group" "flowlogs" {
 
   name = "project3-flowlogs"
 }
-
-# IAM Role for Flow Logs
 
 resource "aws_iam_role" "flowlogs_role" {
 
@@ -99,8 +91,6 @@ resource "aws_iam_role" "flowlogs_role" {
     }]
   })
 }
-
-# IAM Policy for Flow Logs
 
 resource "aws_iam_role_policy" "flowlogs_policy" {
 
@@ -127,8 +117,6 @@ resource "aws_iam_role_policy" "flowlogs_policy" {
   })
 }
 
-# VPC Flow Logs
-
 resource "aws_flow_log" "vpc_flow_logs" {
 
   iam_role_arn = aws_iam_role.flowlogs_role.arn
@@ -139,8 +127,6 @@ resource "aws_flow_log" "vpc_flow_logs" {
 
   vpc_id = aws_vpc.main.id
 }
-
-# CPU Alarm
 
 resource "aws_cloudwatch_metric_alarm" "cpu_alarm" {
 
